@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bet Party</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Bet Party</h1>
+    <p class="subtitle">Organiza quinielas sociales sin servidor ni base de datos</p>
+  </header>
+
+  <main class="layout">
+    <section class="card" id="home">
+      <h2>Pantalla inicial</h2>
+      <p>Elige cómo quieres empezar:</p>
+      <div class="actions">
+        <button id="go-create" class="primary">Crear una Party</button>
+        <button id="go-join" class="secondary">Unirse a una Party</button>
+      </div>
+    </section>
+
+    <section class="card" id="create-party" hidden>
+      <div class="card-header">
+        <h2>Crear una Party</h2>
+        <button class="text" data-close="#create-party">Cerrar</button>
+      </div>
+      <form id="create-party-form" class="grid">
+        <label>
+          Nombre de la party
+          <input name="name" required placeholder="Cumple de Ana" />
+        </label>
+        <label>
+          Nombre del administrador
+          <input name="admin" required placeholder="Tu nombre" />
+        </label>
+        <label>
+          Hora límite de apuestas
+          <input name="start" type="datetime-local" required />
+        </label>
+        <label>
+          Hora de fin de partida
+          <input name="end" type="datetime-local" required />
+        </label>
+        <button class="primary" type="submit">Crear party</button>
+      </form>
+    </section>
+
+    <section class="card" id="join-party" hidden>
+      <div class="card-header">
+        <h2>Unirse a una Party</h2>
+        <button class="text" data-close="#join-party">Cerrar</button>
+      </div>
+      <form id="join-party-form" class="grid">
+        <label>
+          Código de la party
+          <input name="code" required placeholder="Ej: 4F9Q" />
+        </label>
+        <label>
+          Tu nombre
+          <input name="player" required placeholder="Jugador" />
+        </label>
+        <button class="primary" type="submit">Unirse</button>
+      </form>
+      <p class="help">Tip: para probar en local puedes unirte a la party que acabas de crear.</p>
+    </section>
+
+    <section class="card" id="party-dashboard" hidden>
+      <div class="card-header">
+        <div>
+          <p class="eyebrow">Party activa</p>
+          <h2 id="party-name"></h2>
+          <p class="muted">Código: <strong id="party-code"></strong> · Admin: <span id="party-admin"></span></p>
+        </div>
+        <div>
+          <p class="eyebrow">Tiempos</p>
+          <p class="muted">Límite de apuestas: <span id="party-start"></span></p>
+          <p class="muted">Fin de partida: <span id="party-end"></span></p>
+        </div>
+      </div>
+
+      <div class="pill-nav" role="tablist">
+        <button class="pill active" data-tab="players">Jugadores</button>
+        <button class="pill" data-tab="questions">Preguntas</button>
+        <button class="pill" data-tab="voting">Votaciones</button>
+        <button class="pill" data-tab="results">Resultados</button>
+      </div>
+
+      <div class="tab" id="tab-players">
+        <div class="split">
+          <div>
+            <h3>Jugadores</h3>
+            <ul id="players-list" class="chips"></ul>
+          </div>
+          <form id="add-player-form" class="stack">
+            <h3>Añadir jugador</h3>
+            <label>
+              Nombre
+              <input name="player" required placeholder="Invitado" />
+            </label>
+            <button class="secondary" type="submit">Agregar</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-questions" hidden>
+        <div class="split">
+          <div>
+            <h3>Preguntas de la party</h3>
+            <ol id="questions-list" class="question-list"></ol>
+          </div>
+          <form id="add-question-form" class="stack">
+            <h3>Crear apuesta</h3>
+            <label>
+              Pregunta
+              <textarea name="question" required placeholder="¿Quién es el más probable que...?"></textarea>
+            </label>
+            <label>
+              Bote de puntos (opcional)
+              <input type="number" name="pot" min="10" step="10" placeholder="100" />
+            </label>
+            <button class="secondary" type="submit">Añadir pregunta</button>
+            <p class="help">Solo el administrador puede añadir preguntas antes del cierre.</p>
+          </form>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-voting" hidden>
+        <div class="split">
+          <div>
+            <h3>Votar predicciones</h3>
+            <p class="muted">Selecciona tu usuario y elige un jugador para cada apuesta antes del límite.</p>
+            <div class="stack">
+              <label>
+                ¿Quién vota?
+                <select id="voter-select"></select>
+              </label>
+              <div id="voting-questions" class="question-list"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Cuotas dinámicas</h3>
+            <p class="muted">Las cuotas premian a quien apuesta diferente. Se recalculan con cada voto.</p>
+            <div id="odds-preview"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-results" hidden>
+        <div class="split">
+          <div>
+            <h3>Cierre de partida</h3>
+            <p class="muted">Cuando llegue la hora de fin, el administrador marca lo que realmente ocurrió.</p>
+            <div id="resolution-list" class="question-list"></div>
+            <button class="primary" id="compute-results">Confirmar resultados</button>
+          </div>
+          <div class="panel">
+            <h3>Clasificación final</h3>
+            <div id="scoreboard"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <template id="question-template">
+    <li class="question">
+      <div class="question-body">
+        <p class="question-text"></p>
+        <p class="meta"></p>
+      </div>
+      <div class="question-actions"></div>
+    </li>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
